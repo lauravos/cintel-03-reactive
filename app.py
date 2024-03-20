@@ -1,7 +1,7 @@
 import plotly.express as px
 from shiny.express import input, ui
 from shinywidgets import render_plotly, output_widget, render_widget
-from shiny import render, App
+from shiny import render, App, reactive
 import palmerpenguins # import the Palmer Penguin dataset
 import seaborn as sns
 
@@ -47,14 +47,14 @@ with ui.navset_card_tab(id="tab"):
     with ui.nav_panel("Data Table"):
         @render.data_frame  
         def penguins_dataTable():
-            return render.DataTable(penguins_df)  
+            return render.DataTable(filtered_data())  
 
 #DataGrid
     with ui.nav_panel("Data Grid"):
         ui.h2("Palmer Penguins")
         @render.data_frame  
         def penguins_dataGrid():
-            return render.DataGrid(penguins_df)  
+            return render.DataGrid(filtered_data())  
 
 
 #Plotly Histogram
@@ -65,7 +65,7 @@ with ui.accordion(id="acc", open="closed"):
         @render_widget  
         def plotly():  
             scatterplot = px.histogram(
-                data_frame=penguins_df,
+                data_frame=filtered_data(),
                 x="body_mass_g",
                 nbins=input.n(),
             ).update_layout(
@@ -83,7 +83,7 @@ with ui.accordion(id="acc", open="closed"):
 
         @render.plot(alt="A Seaborn histogram on penguin body mass in grams.")  
         def plotHistogram():  
-            ax = sns.histplot(data=penguins_df, x="body_mass_g", bins=input.m())  
+            ax = sns.histplot(data=filtered_data(), x="body_mass_g", bins=input.m())  
             ax.set_title("Palmer Penguins")
             ax.set_xlabel("Mass (g)")
             ax.set_ylabel("Count")
@@ -101,7 +101,20 @@ with ui.card(full_screen=True):
         # Create a Plotly scatterplot using Plotly Express
         # Call px.scatter() function
         # Pass in six arguments:
-        fig = px.scatter(penguins_df, x="bill_length_mm", y="flipper_length_mm", 
+        fig = px.scatter(filtered_data(), x="bill_length_mm", y="flipper_length_mm", 
                          color="species", title="Scatterplot",labels={"bill_length_mm": "Bill Length (mm)",
                          "flipper_length_mm": "Flipper Length (mm)"})
         return fig
+
+# --------------------------------------------------------
+# Reactive calculations and effects
+# --------------------------------------------------------
+
+# Add a reactive calculation to filter the data
+# By decorating the function with @reactive, we can use the function to filter the data
+# The function will be called whenever an input functions used to generate that output changes.
+# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
+
+@reactive.calc
+def filtered_data():
+    return penguins_df
