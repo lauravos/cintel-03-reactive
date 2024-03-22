@@ -16,7 +16,6 @@ ui.page_opts(title="Gagnon-Vos Penguin Data", fillable=True)
 with ui.sidebar(open = "open"):
     ui.h2("Sidebar")
 
-
 # Use ui.input_selectize() to create a dropdown input to choose a column
     
     ui.input_selectize("selectized_attribute", "Select Attribute", ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"])
@@ -32,6 +31,9 @@ with ui.sidebar(open = "open"):
 # Use ui.input_checkbox_group() to create a checkbox group input to filter the species
 
     ui.input_checkbox_group("selected_species_list", "Species", ["Adelie", "Gentoo", "Chinstrap"], selected=["Adelie"], inline=False)
+
+#Create a checkbox group input to filter the species
+    ui.input_checkbox_group("island_list", "Island", ["Torgersen", "Biscoe", "Dream"], inline=False)
 
 # Use ui.hr() to add a horizontal rule to the sidebar
 
@@ -66,12 +68,13 @@ with ui.accordion(id="acc", open="closed"):
         def plotly():  
             scatterplot = px.histogram(
                 data_frame=filtered_data(),
-                x="body_mass_g",
+                x=input.selectized_attribute(),
                 nbins=input.n(),
+                color="species",
             ).update_layout(
-                title={"text": "Penguin Mass", "x": 0.5},
+                title={"text": "Plotly Histogram", "x": 0.5},
                 yaxis_title="Count",
-                xaxis_title="Body Mass (g)"
+                xaxis_title=input.selectized_attribute()
             )
 
             return scatterplot  
@@ -83,9 +86,9 @@ with ui.accordion(id="acc", open="closed"):
 
         @render.plot(alt="A Seaborn histogram on penguin body mass in grams.")  
         def plotHistogram():  
-            ax = sns.histplot(data=filtered_data(), x="body_mass_g", bins=input.m())  
+            ax = sns.histplot(data=filtered_data(), x=input.selectized_attribute(), bins=input.m())  
             ax.set_title("Palmer Penguins")
-            ax.set_xlabel("Mass (g)")
+            ax.set_xlabel(input.selectized_attribute())
             ax.set_ylabel("Count")
             return ax  
 
@@ -101,9 +104,9 @@ with ui.card(full_screen=True):
         # Create a Plotly scatterplot using Plotly Express
         # Call px.scatter() function
         # Pass in six arguments:
-        fig = px.scatter(filtered_data(), x="bill_length_mm", y="flipper_length_mm", 
-                         color="species", title="Scatterplot",labels={"bill_length_mm": "Bill Length (mm)",
-                         "flipper_length_mm": "Flipper Length (mm)"})
+        fig = px.scatter(filtered_data(), x=input.selectized_attribute(), y="body_mass_g", 
+                         color="species", title="Scatterplot",labels={"bill_length_mm": "Bill Length (mm)", "bill_depth_mm": "Bill Depth (mm)", "flipper_length_mm": "Flipper Length (mm)",
+                         "body_mass_g": "Body Mass (g)"})
         return fig
 
 # --------------------------------------------------------
@@ -117,4 +120,5 @@ with ui.card(full_screen=True):
 
 @reactive.calc
 def filtered_data():
-    return penguins_df
+    isSpeciesMatch = penguins_df["species"].isin(input.selected_species_list()) & penguins_df["island"].isin(input.island_list())
+    return penguins_df[isSpeciesMatch]
