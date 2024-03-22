@@ -22,18 +22,18 @@ with ui.sidebar(open = "open"):
 
 # Use ui.input_numeric() to create a numeric input for the number of Plotly histogram bins
 
-    ui.input_numeric("plotly_bin_count", "Bin Count", 1, min=1, max=20)
+    ui.input_numeric("plotly_bin_count", "Bin Count", 10, min=1, max=20)
 
 # Use ui.input_slider() to create a slider input for the number of Seaborn bins
 
-    ui.input_slider("seaborn_bin_count", "Bin Count", 0, 100, 50)
+    ui.input_slider("seaborn_bin_count", "Seaborn Bin Count", 0, 100, 50)
 
 # Use ui.input_checkbox_group() to create a checkbox group input to filter the species
 
-    ui.input_checkbox_group("selected_species_list", "Species", ["Adelie", "Gentoo", "Chinstrap"], selected=["Adelie"], inline=False)
+    ui.input_checkbox_group("selected_species_list", "Species", ["Adelie", "Gentoo", "Chinstrap"], selected=["Adelie", "Gentoo", "Chinstrap"], inline=False)
 
 #Create a checkbox group input to filter the species
-    ui.input_checkbox_group("island_list", "Island", ["Torgersen", "Biscoe", "Dream"], inline=False)
+    ui.input_checkbox_group("island_list", "Island", ["Torgersen", "Biscoe", "Dream"], selected=["Torgersen", "Biscoe", "Dream"], inline=False)
 
 # Use ui.hr() to add a horizontal rule to the sidebar
 
@@ -62,14 +62,13 @@ with ui.navset_card_tab(id="tab"):
 #Plotly Histogram
 with ui.accordion(id="acc", open="closed"):
     with ui.accordion_panel("Plotly Histogram"):   
-        ui.input_slider("n", "Number of bins", 1, 100, 20)
 
         @render_widget  
         def plotly():  
             scatterplot = px.histogram(
                 data_frame=filtered_data(),
                 x=input.selectized_attribute(),
-                nbins=input.n(),
+                nbins=input.plotly_bin_count(),
                 color="species",
             ).update_layout(
                 title={"text": "Plotly Histogram", "x": 0.5},
@@ -82,11 +81,10 @@ with ui.accordion(id="acc", open="closed"):
 
 #Seaborn Histogram
     with ui.accordion_panel("Seaborn Histogram"):
-        ui.input_slider("m", "Number of bins", 1, 100, 25)
 
         @render.plot(alt="A Seaborn histogram on penguin body mass in grams.")  
         def plotHistogram():  
-            ax = sns.histplot(data=filtered_data(), x=input.selectized_attribute(), bins=input.m())  
+            ax = sns.histplot(data=filtered_data(), x=input.selectized_attribute(), bins=input.seaborn_bin_count())  
             ax.set_title("Palmer Penguins")
             ax.set_xlabel(input.selectized_attribute())
             ax.set_ylabel("Count")
